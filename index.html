@@ -46,6 +46,7 @@
                 <input type="password" class="form-control" id="password" required>
             </div>
             <button type="submit" class="btn btn-primary">Entrar</button>
+            
         </form>
     </div>
 
@@ -145,6 +146,7 @@
             const foldersList = document.getElementById('foldersList');
             const filesList = document.getElementById('filesList');
             const searchForm = document.getElementById('searchForm');
+            const registerLink = document.getElementById('registerLink');
 
             let folders = JSON.parse(localStorage.getItem('folders')) || [];
 
@@ -153,6 +155,15 @@
                 loginPage.style.display = 'none';
                 mainPage.style.display = 'block';
                 renderFolders();
+            });
+
+            registerLink.addEventListener('click', function(event) {
+                event.preventDefault();
+                loginPage.style.display = 'none';
+                mainPage.style.display = 'none';
+                // Aqui você pode adicionar lógica para mostrar a tela de registro
+                // Por exemplo:
+                // registerPage.style.display = 'block';
             });
 
             homeLink.addEventListener('click', function() {

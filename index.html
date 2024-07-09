@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Arquivos - Trimix Sistemas</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            padding-top: 56px;
+        }
+
+        #loginPage {
+            max-width: 400px;
+            margin: auto;
+        }
+
+        #mainPage {
+            padding-top: 20px;
+        }
+
+        #foldersList {
+            margin-top: 20px;
+        }
+
+        .navbar {
+            margin-bottom: 20px;
+        }
+
+        .navbar-dark {
+            background-color: #343a40;
+        }
+    </style>
+</head>
+<body>
+    <div id="loginPage" class="container">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Usuário:</label>
+                <input type="text" class="form-control" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Senha:</label>
+                <input type="password" class="form-control" id="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Entrar</button>
+        </form>
+    </div>
+
+    <div id="mainPage" class="container" style="display:none;">
+        <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+            <a class="navbar-brand" href="#">Trimix Sistemas</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#" id="homeLink"><i class="fas fa-home"></i> Início</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="filesLink"><i class="fas fa-folder"></i> Arquivos</a>
+                    </li>
+                </ul>
+                <form class="form-inline my-2 my-lg-0 ml-auto" id="searchForm">
+                    <input class="form-control mr-sm-2" type="search" placeholder="Pesquisar" aria-label="Pesquisar">
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Pesquisar</button>
+                </form>
+            </div>
+        </nav>
+
+        <div id="filesPage" style="display:none;">
+            <button class="btn btn-success" id="createFolderBtn" data-toggle="modal" data-target="#createFolderModal">Criar Pasta</button>
+            <table class="table mt-4">
+                <thead>
+                    <tr>
+                        <th>Nome da Pasta</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="foldersList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Criar Pasta -->
+    <div class="modal fade" id="createFolderModal" tabindex="-1" role="dialog" aria-labelledby="createFolderModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createFolderModalLabel">Criar Pasta</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="createFolderForm">
+                        <div class="form-group">
+                            <label for="folderName">Nome da Pasta</label>
+                            <input type="text" class="form-control" id="folderName" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Criar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Abrir Pasta -->
+    <div class="modal fade" id="openFolderModal" tabindex="-1" role="dialog" aria-labelledby="openFolderModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="openFolderModalLabel">Arquivos na Pasta</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nome do Arquivo</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="filesList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const loginPage = document.getElementById('loginPage');
+            const mainPage = document.getElementById('mainPage');
+            const homeLink = document.getElementById('homeLink');
+            const filesLink = document.getElementById('filesLink');
+            const filesPage = document.getElementById('filesPage');
+            const createFolderForm = document.getElementById('createFolderForm');
+            const foldersList = document.getElementById('foldersList');
+            const filesList = document.getElementById('filesList');
+            const searchForm = document.getElementById('searchForm');
+
+            let folders = JSON.parse(localStorage.getItem('folders')) || [];
+
+            loginForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                loginPage.style.display = 'none';
+                mainPage.style.display = 'block';
+                renderFolders();
+            });
+
+            homeLink.addEventListener('click', function() {
+                filesPage.style.display = 'none';
+            });
+
+            filesLink.addEventListener('click', function() {
+                filesPage.style.display = 'block';
+            });
+
+            searchForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                alert('Funcionalidade de pesquisa não implementada.');
+            });
+
+            createFolderForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const folderName = document.getElementById('folderName').value;
+                if (folderName) {
+                    folders.push({
+                        name: folderName,
+                        files: []
+                    });
+                    saveFolders();
+                    renderFolders();
+                    $('#createFolderModal').modal('hide');
+                }
+            });
+
+            function saveFolders() {
+                localStorage.setItem('folders', JSON.stringify(folders));
+            }
+
+            function renderFolders() {
+                foldersList.innerHTML = '';
+                folders.forEach((folder, index) => {
+                    const folderRow = document.createElement('tr');
+                    folderRow.innerHTML = `
+                        <td><i class="fas fa-folder"></i> ${folder.name}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm open-folder-btn" data-index="${index}">
+                                <i class="fas fa-folder-open"></i> Abrir Pasta
+                            </button>
+                            <button class="btn btn-secondary btn-sm upload-file-btn" data-index="${index}">
+                                <i class="fas fa-file-upload"></i> Enviar Arquivo
+                            </button>
+                            <button class="btn btn-danger btn-sm delete-folder-btn" data-index="${index}">
+                                <i class="fas fa-trash-alt"></i> Excluir Pasta
+                            </button>
+                        </td>
+                    `;
+                    foldersList.appendChild(folderRow);
+
+                    folderRow.querySelector('.open-folder-btn').addEventListener('click', function() {
+                        const folderIndex = this.getAttribute('data-index');
+                        openFolder(folderIndex);
+                    });
+
+                    folderRow.querySelector('.upload-file-btn').addEventListener('click', function() {
+                        const folderIndex = this.getAttribute('data-index');
+                        uploadFile(folderIndex);
+                    });
+
+                    folderRow.querySelector('.delete-folder-btn').addEventListener('click', function() {
+                        const folderIndex = this.getAttribute('data-index');
+                        deleteFolder(folderIndex);
+                    });
+                });
+            }
+
+            function openFolder(index) {
+                const folder = folders[index];
+                filesList.innerHTML = '';
+                folder.files.forEach((file, fileIndex) => {
+                    const fileRow = document.createElement('tr');
+                    fileRow.innerHTML = `
+                        <td>${file.name}</td>
+                        <td>
+                            <button class="btn btn-sm btn-success download-file-btn" data-folder-index="${index}" data-file-index="${fileIndex}">
+                                <i class="fas fa-download"></i> Baixar
+                            </button>
+                        </td>
+                    `;
+                    filesList.appendChild(fileRow);
+
+                    fileRow.querySelector('.download-file-btn').addEventListener('click', function() {
+                        const folderIndex = this.getAttribute('data-folder-index');
+                        const fileIndex = this.getAttribute('data-file-index');
+                        downloadFile(folderIndex, fileIndex);
+                    });
+                });
+                $('#openFolderModal').modal('show');
+            }
+
+            function uploadFile(index) {
+                const folder = folders[index];
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.style.display = 'none';
+                document.body.appendChild(fileInput);
+
+                fileInput.addEventListener('change', function() {
+                    const file = fileInput.files[0];
+                    const fileUrl = URL.createObjectURL(file);
+                    folder.files.push({
+                        name: file.name,
+                        url: fileUrl
+                    });
+                    saveFolders();
+                    renderFolders();
+                });
+
+                fileInput.click();
+                document.body.removeChild(fileInput);
+            }
+
+            function deleteFolder(index) {
+                folders.splice(index, 1);
+                saveFolders();
+                renderFolders();
+            }
+
+            function downloadFile(folderIndex, fileIndex) {
+                const folder = folders[folderIndex];
+                const file = folder.files[fileIndex];
+                const a = document.createElement('a');
+                a.href = file.url;
+                a.download = file.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+
+            renderFolders();
+        });
+    </script>
+</body>
+</html>
